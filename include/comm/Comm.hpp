@@ -37,6 +37,7 @@
 #include <condition_variable>
 #include "Message.hpp"
 #include "../infra/Common.hpp"
+#include <transputation/transputation.h>
 
 namespace boost_ip = boost::asio::ip; // reduce the typing a bit later...
 using IpAddress = boost_ip::address;
@@ -74,6 +75,7 @@ class SocketPartyData : public PartyData {
 private:
 	IpAddress ipAddress; // party's address.
 	int port; // port number to listen on.
+    bool server;
 	int compare(const SocketPartyData &other) const;
 public:
 	SocketPartyData() {};
@@ -82,12 +84,14 @@ public:
 	* @param ip Party's address.
 	* @param port Port number to listen on.
 	*/
-	SocketPartyData(IpAddress ip, int port) {
+	SocketPartyData(IpAddress ip, int port, bool server) {
 		ipAddress = ip;
 		this->port = port;
+		this->server = server;
 	};
 	IpAddress getIpAddress() { return ipAddress; };
 	int getPort() { return port; };
+    bool isServer() { return server; };
 	string to_log_string() {
 		return ipAddress.to_string() + "|" + to_string(port);
 	};
@@ -132,57 +136,33 @@ public:
 	virtual size_t readWithSizeIntoVector(vector<byte> & targetVector);
 	virtual void writeWithSize(string s) { writeWithSize((const byte*)s.c_str(), s.size()); };
 	virtual ~CommParty() {};
+	char *getProtocol() { return protocol; }
+protected:
+    transputation::Transport *t;
+    char *protocol;
 };
 
 class CommPartyTCPSynced : public CommParty {
 public:
-	CommPartyTCPSynced(boost::asio::io_service& ioService, SocketPartyData me, SocketPartyData other) :
-		ioServiceServer(ioService), ioServiceClient(ioService),
-		acceptor_(ioService, tcp::endpoint(tcp::v4(), me.getPort())),
-		serverSocket(ioService), clientSocket(ioService)
+	CommPartyTCPSynced(const char *protocol, SocketPartyData me, SocketPartyData other)
 	{
+		this->protocol = (char *)malloc(strlen(protocol) + 1);
+		strcpy(this->protocol, protocol);
 		this->me = me;
 		this->other = other;
+		this->t = transputation::Transport::GetTransport(protocol);
 	};
 	void join(int sleepBetweenAttempts = 500, int timeout = 5000) override;
 
 	void write(const byte* data, int size) override;
 	size_t read(byte* data, int sizeToRead) override {
-		return boost::asio::read(serverSocket, boost::asio::buffer(data, sizeToRead));
+        return t->RecvRaw(sizeToRead, data);
 	}
 	virtual ~CommPartyTCPSynced(); 
+	transputation::Transport *getTransport() { return t; }
 
 private:
-	boost::asio::io_service& ioServiceServer;
-	boost::asio::io_service& ioServiceClient;
-	tcp::acceptor acceptor_;
-	tcp::socket serverSocket;
-	tcp::socket clientSocket;
 	SocketPartyData me;
 	SocketPartyData other;
 	void setSocketOptions();
-};
-
-typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> ssl_socket;
-
-class CommPartyTcpSslSynced : public CommParty {
-public:
-	CommPartyTcpSslSynced(boost::asio::io_service& ioService, SocketPartyData me, SocketPartyData other,
-		string certificateChainFile, string password, string privateKeyFile, string tmpDHFile,
-		string clientVerifyFile);
-	void join(int sleepBetweenAttempts = 500, int timeout = 5000) override;
-	void write(const byte* data, int size) override;
-	size_t read(byte* data, int sizeToRead) override {
-		return boost::asio::read(*serverSocket, boost::asio::buffer(data, sizeToRead));
-	}
-	virtual ~CommPartyTcpSslSynced();
-
-private:
-	boost::asio::io_service& ioServiceServer;
-	boost::asio::io_service& ioServiceClient;
-	tcp::acceptor acceptor_;
-	ssl_socket* serverSocket;
-	ssl_socket* clientSocket;
-	SocketPartyData me;
-	SocketPartyData other;
 };

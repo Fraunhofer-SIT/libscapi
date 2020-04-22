@@ -20,7 +20,7 @@ void OTExtensionBristolBase::init(const string& senderAddress, int port, int my_
 	names[my_num] = "localhost";
 	names[1-my_num] = senderAddress;
 
-	pParty.reset(new TwoPartyPlayer(Names(my_num, 0, names), 1 - my_num, port));
+	pParty.reset(new TwoPartyPlayer(channel->getProtocol(), Names(my_num, 0, names), 1 - my_num, port));
 
 	//init the base OT with 128 ot's with 128 bit length for the relevant role.
 	BaseOT baseOT(128, 128, 1 - my_num, pParty.get(), INV_ROLE(ot_role));

@@ -131,7 +131,7 @@ public:
 	* @param otSender The OT object to use in the protocol.
 	* @param inputForTest
 	*/
-	PartyOne(YaoConfig & yao_config);
+	PartyOne(const char *protocol, int circuit_select, YaoConfig & yao_config);
 
 	~PartyOne() {
 		delete circuit;
@@ -205,7 +205,7 @@ public:
 	* @param otSender The OT object to use in the protocol.
 	* @param inputForTest
 	*/
-	PartyTwo(YaoConfig & yao_config, bool print_output = false);
+	PartyTwo(const char *protocol, int circuit_select, YaoConfig & yao_config, bool print_output = false);
 
 	~PartyTwo() {
 		delete circuit;

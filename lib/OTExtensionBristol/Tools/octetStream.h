@@ -9,6 +9,7 @@
 #include <vector>
 #include <stdio.h>
 #include <iostream>
+#include <transputation/transputation.h>
 using namespace std;
 
 
@@ -74,8 +75,8 @@ class octetStream
       s.len=l;
     }
 
-  void Send(int socket_num) const;
-  void Receive(int socket_num);
+  void Send(transputation::Transport *t) const;
+  void Receive(transputation::Transport *t);
 
   friend ostream& operator<<(ostream& s,const octetStream& o);
   friend class PRNG;

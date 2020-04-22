@@ -17,6 +17,7 @@ using namespace std;
 #include "Tools/octetStream.h"
 #include "Networking/sockets.h"
 #include "Tools/sha1.h"
+#include <transputation/transputation.h>
 
 /* Class to get the names off the server */
 class Names
@@ -55,6 +56,7 @@ class Names
 class PlayerBase
 {
 protected:
+  transputation::Transport *t;
   vector<int> sockets;
   vector<int> msocket;
    
@@ -83,7 +85,9 @@ protected:
   bool sockets_open;
 
 public:
-  TwoPartyPlayer(const Names& Nms, int other_player, int pn_offset=0);
+  TwoPartyPlayer(const Names& Nms, int other_player, int pn_offset=0) :
+	TwoPartyPlayer("tcp", Nms, other_player, pn_offset) {}
+  TwoPartyPlayer(const char *protocol, const Names& Nms, int other_player, int pn_offset=0);
   ~TwoPartyPlayer();
 
   void send(octetStream& o) const;

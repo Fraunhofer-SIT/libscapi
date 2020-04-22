@@ -83,19 +83,23 @@ YaoConfig read_yao_config(string config_file) {
 
 int main(int argc, char* argv[]) {
 
+	if (argc != 5) {
+		std::cerr << "Usage: libscapi_examples yao <party_number(1|2)> <config_path> <protocol> <circuit 0-2>" << std::endl;
+		return 1;
+	}
 	int partyNum = atoi(argv[1]);
+	int circuit_select = atoi(argv[4]);
 	
 	YaoConfig yao_config(argv[2]);
 	if (partyNum == 1) {
 		// create Party one with the previous created objects.
-		PartyOne p1(yao_config);
+		PartyOne p1(argv[3], circuit_select, yao_config);
 		execute_party_one(&p1, yao_config);
 	}
 	else if (partyNum == 2) {
-		PartyTwo p2(yao_config);
+		PartyTwo p2(argv[3], circuit_select, yao_config);
 		execute_party_two(&p2, yao_config);
 	} else {
-		std::cerr << "Usage: libscapi_examples yao <party_number(1|2)> <config_path>" << std::endl;
 		return 1;
 	}
 

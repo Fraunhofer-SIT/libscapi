@@ -1,4 +1,4 @@
-# LIBSCAPI - The Secure Computation API
+# LIBSCAPI - The Secure Computation API using Transputation
 
 libscapi is the Open source C++ library for implementing high performance secure two-party and multiparty computation protocols (SCAPI stands for the "Secure Computation API"). It provides a reliable, efficient, and highly flexible cryptographic infrastructure.
 

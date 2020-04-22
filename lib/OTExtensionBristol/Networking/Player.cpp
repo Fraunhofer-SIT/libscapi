@@ -3,6 +3,7 @@
 
 #include "Player.h"
 #include "Exceptions/Exceptions.h"
+#include <transputation/transputation.h>
 
 // Use printf rather than cout so valgrind can detect thread issues
 
@@ -65,8 +66,9 @@ void Names::setup_names(const char *servername)
 }
 
 
-TwoPartyPlayer::TwoPartyPlayer(const Names& Nms, int other_player, int pn_offset)
+TwoPartyPlayer::TwoPartyPlayer(const char *protocol, const Names& Nms, int other_player, int pn_offset)
 {
+  t = transputation::Transport::GetTransport(protocol);
   nplayers = Nms.nplayers;
   player_no = Nms.player_no;
   this->other_player = other_player;
@@ -101,24 +103,26 @@ void TwoPartyPlayer::setup_sockets(const vector<string>& names,int portnum_base)
   if (player_no < other_player)
   {
     printf("Setting up server on %d\n", pn);
-    set_up_server_socket(dest, sockets[0], msocket[0], pn);
+    t->SetupServer(NULL, portnum_base);
+    t->Accept();
   }
   else
   {
     printf("Setting up client to %s %d\n", names[other_player].c_str(), pn);
-    set_up_client_socket(sockets[0], names[other_player].c_str(), pn);
+    t->SetupClient(names[other_player].c_str(), pn);
+    t->Connect();
   }
 }
 
 void TwoPartyPlayer::send(octetStream& o) const
 {
-  o.Send(sockets[0]);
+  o.Send(t);
 }
 
 void TwoPartyPlayer::receive(octetStream& o) const
 {
   o.reset_write_head();
-  o.Receive(sockets[0]);
+  o.Receive(t);
 }
 
 void TwoPartyPlayer::send_receive_player(vector<octetStream>& o) const
@@ -126,15 +130,15 @@ void TwoPartyPlayer::send_receive_player(vector<octetStream>& o) const
   {
     if (other_player < player_no)
     {
-      o[0].Send(sockets[0]);
+      o[0].Send(t);
       o[1].reset_write_head();
-      o[1].Receive(sockets[0]);
+      o[1].Receive(t);
     }
     else
     {
       o[1].reset_write_head();
-      o[1].Receive(sockets[0]);
-      o[0].Send(sockets[0]);
+      o[1].Receive(t);
+      o[0].Send(t);
     }
   }
 }

@@ -14,7 +14,7 @@ ifeq ($(uname_S),Darwin)
 endif
 
 # external libs (linking options)
-LIBRARIES=$(INCLUDE_ARCHIVES_START) -lpthread -lmiracl -lssl -lcrypto $(INCLUDE_ARCHIVES_END) #-lgmp -lgmpxx 
+LIBRARIES=$(INCLUDE_ARCHIVES_START) -ltransputation -lpthread -lmiracl -lssl -lcrypto $(INCLUDE_ARCHIVES_END) #-lgmp -lgmpxx 
 #LIBRARIES_DIR=-L$(prefix)/ssl/lib -L$(prefix)/lib
 LIBRARIES_DIR=-L$(prefix)/lib
 

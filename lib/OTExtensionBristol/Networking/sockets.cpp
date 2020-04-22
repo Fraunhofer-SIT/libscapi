@@ -81,8 +81,8 @@ void set_up_server_socket(sockaddr_in& dest,int& consocket,int& main_socket,int 
 
 void close_server_socket(int consocket,int main_socket)
 {
-  if (close(consocket)) { error("close(socket)"); }
-  if (close(main_socket)) { error("close(main_socket"); };
+  //if (close(consocket)) { error("close(socket)"); }
+  //if (close(main_socket)) { error("close(main_socket"); };
 }
 
 

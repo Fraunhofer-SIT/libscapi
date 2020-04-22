@@ -45,20 +45,31 @@ vector<byte> readInputAsVector(string input_file) {
 /*          PartyOne             */
 /*********************************/
 
-PartyOne::PartyOne(YaoConfig & yao_config) {
+PartyOne::PartyOne(const char *protocol, int circuit_select, YaoConfig & yao_config) {
 	//t = boost::thread(boost::bind(&boost::asio::io_service::run, &io_service));
 	this->yaoConfig = yao_config;
 
-	SocketPartyData me(yao_config.sender_ip, 1213);
-	SocketPartyData other(yao_config.receiver_ip, 1212);
-	channel = make_shared<CommPartyTCPSynced>(io_service, me, other);
+	SocketPartyData me(yao_config.sender_ip, 1212, true);
+	SocketPartyData other(yao_config.receiver_ip, 1212, false);
+	channel = make_shared<CommPartyTCPSynced>(protocol, me, other);
 
 	// create the garbled circuit
-	circuit = GarbledCircuitFactory::createCircuit(yao_config.circuit_file,
-		GarbledCircuitFactory::CircuitType::FIXED_KEY_FREE_XOR_HALF_GATES, false);
+	if (circuit_select == 2) {
+		circuit = GarbledCircuitFactory::createCircuit(yao_config.circuit_file,
+			GarbledCircuitFactory::CircuitType::NO_FIXED_KEY_FREE_XOR_HALF_GATES, false);
+		printf("Using circuirt NO_FIXED_KEY_FREE_XOR_HALF_GATES\n");
+	} else if (circuit_select == 1) {
+		circuit = GarbledCircuitFactory::createCircuit(yao_config.circuit_file,
+			GarbledCircuitFactory::CircuitType::NO_FIXED_KEY_FOUR_TO_TWO, false);
+		printf("Using circuirt NO_FIXED_KEY_FOUR_TO_TWO\n");
+	} else {
+		circuit = GarbledCircuitFactory::createCircuit(yao_config.circuit_file,
+			GarbledCircuitFactory::CircuitType::FIXED_KEY_FREE_XOR_HALF_GATES, false);
+		printf("Using circuirt FIXED_KEY_FREE_XOR_HALF_GATES\n");
+	}
 
 	// create the semi honest OT extension sender
-	SocketPartyData senderParty(yao_config.sender_ip, 7766);
+	SocketPartyData senderParty(yao_config.sender_ip, 7766, false);
 #ifdef _WIN32
 	otSender = new OTSemiHonestExtensionSender(senderParty, 163, 1);
 #else
@@ -67,6 +78,8 @@ PartyOne::PartyOne(YaoConfig & yao_config) {
 
 	// connect to party two
 	channel->join(500, 5000);
+
+	this->setInputs(yao_config.input_file_1);
 };
 
 void PartyOne::setInputs(string inputFileName) {
@@ -137,20 +150,31 @@ void PartyOne::runOTProtocol() {
 /*          PartyTwo             */
 /*********************************/
 
-PartyTwo::PartyTwo(YaoConfig & yao_config, bool print_output) {
+PartyTwo::PartyTwo(const char *protocol, int circuit_select, YaoConfig & yao_config, bool print_output) {
 	this->print_output = print_output;
 	this->yaoConfig = yao_config;
 	// init
-	SocketPartyData me(yao_config.receiver_ip, 1212);
-	SocketPartyData other(yao_config.sender_ip, 1213);
-	channel = make_shared<CommPartyTCPSynced>(io_service, me, other);
+	SocketPartyData me(yao_config.receiver_ip, 1212, false);
+	SocketPartyData other(yao_config.sender_ip, 1212, false);
+	channel = make_shared<CommPartyTCPSynced>(protocol, me, other);
 
 	// create the garbled circuit
-	circuit = GarbledCircuitFactory::createCircuit(yao_config.circuit_file,
-		GarbledCircuitFactory::CircuitType::FIXED_KEY_FREE_XOR_HALF_GATES, false);
+	if (circuit_select == 2) {
+		circuit = GarbledCircuitFactory::createCircuit(yao_config.circuit_file,
+			GarbledCircuitFactory::CircuitType::NO_FIXED_KEY_FREE_XOR_HALF_GATES, false);
+		printf("Using circuirt NO_FIXED_KEY_FREE_XOR_HALF_GATES\n");
+	} else if (circuit_select == 1) {
+		circuit = GarbledCircuitFactory::createCircuit(yao_config.circuit_file,
+			GarbledCircuitFactory::CircuitType::NO_FIXED_KEY_FOUR_TO_TWO, false);
+		printf("Using circuirt NO_FIXED_KEY_FOUR_TO_TWO\n");
+	} else {
+		circuit = GarbledCircuitFactory::createCircuit(yao_config.circuit_file,
+			GarbledCircuitFactory::CircuitType::FIXED_KEY_FREE_XOR_HALF_GATES, false);
+		printf("Using circuirt FIXED_KEY_FREE_XOR_HALF_GATES\n");
+	}
 
 	// create the OT receiver.
-	SocketPartyData senderParty(yao_config.sender_ip, 7766);
+	SocketPartyData senderParty(yao_config.sender_ip, 7766, true);
 #ifdef _WIN32
 	otReceiver = new OTSemiHonestExtensionReceiver(senderParty, 163, 1);
 #else
@@ -160,6 +184,8 @@ PartyTwo::PartyTwo(YaoConfig & yao_config, bool print_output) {
 
 	// connect to party one
 	channel->join(500, 5000);
+
+	this->setInputs(yao_config.input_file_2);
 }
 
 void PartyTwo::setInputs(string inputFileName) {

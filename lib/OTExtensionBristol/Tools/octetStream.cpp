@@ -131,25 +131,25 @@ void octetStream::get(unsigned int& l)
 
 
 
-void octetStream::Send(int socket_num) const
+void octetStream::Send(transputation::Transport *t) const
 {
   octet blen[4];
   encode_length(blen,len);
-  send(socket_num,blen,4);
-  send(socket_num,data,len);
+  t->SendRaw(4, (uint8_t *)blen);
+  t->SendRaw(len, (uint8_t *)data);
 }
 
-void octetStream::Receive(int socket_num)
+void octetStream::Receive(transputation::Transport *t)
 {
   octet blen[4];
-  receive(socket_num,blen,4);
+  t->RecvRaw(4, (uint8_t *)blen);
 
   int nlen=decode_length(blen);
   len=0;
   resize(nlen);
   len=nlen;
 
-  receive(socket_num,data,len);
+  t->RecvRaw(len, (uint8_t *)data);
 }
 
 ostream& operator<<(ostream& s,const octetStream& o)
